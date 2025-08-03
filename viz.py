@@ -87,6 +87,7 @@ def main(result_path: Path):
     )
 
     fig.savefig(result_path.parent / "f1_by_class.png")
+    print(f"Saved F1 by class plot to {result_path.parent / 'f1_by_class.png'}")
 
 
 @click.command()
