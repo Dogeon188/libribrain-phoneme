@@ -4,7 +4,7 @@ data:
     standardize: true
     tmin: 0.0
     tmax: 0.5
-    task: 'speech'
+    task: 'phoneme'
   dataloader:
     batch_size: 512
     num_workers: 4
