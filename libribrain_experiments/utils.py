@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 from pnpl.datasets import LibriBrainPhoneme, LibriBrainSpeech, LibriBrainCompetitionHoldout
 from torch.utils.data import DataLoader, ConcatDataset
 import json
@@ -16,66 +17,10 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 import json
 
-from .models.configurable_modules.classification_module import ClassificationModule
-
+from libribrain_experiments.grouped_dataset import MyGroupedDataset
 # from pnpl.datasets.grouped_dataset import GroupedDataset
 
-
-class GroupedDataset(torch.utils.data.Dataset):
-    def __init__(self, original_dataset, grouped_samples=10, drop_remaining=False, shuffle=False, average_grouped_samples=True):
-        """
-        Groups n samples from the original dataset by label 
-
-        Parameters:
-        - original_dataset: The original dataset to group
-        - grouped_samples: The number of samples to group over
-        - drop_remaining: Whether to drop the last group if it is incomplete
-        - shuffle: Whether to shuffle the samples
-        - average_grouped_samples: Whether to average the grouped samples
-        """
-
-        if (not drop_remaining and not average_grouped_samples):
-            raise ValueError(
-                "drop_remaining and average_grouped_samples cannot both be False. Otherwise the dimension of the output will be inconsistent.")
-
-        self.original_dataset = original_dataset
-        self.average_grouped_samples = average_grouped_samples
-        self.groups = []
-        self.partial_groups = {}
-        self.grouped_samples = grouped_samples
-        if shuffle:
-            indices = torch.randperm(len(original_dataset))
-        else:
-            indices = torch.arange(len(original_dataset))
-        for i in tqdm(indices, desc="Grouping samples", total=len(original_dataset)):
-            label = original_dataset[i][1].item()
-            group = self.partial_groups.get(label, [])
-            group.append(i.item())
-            self.partial_groups[label] = group
-            if (len(group) == grouped_samples):
-                self.groups.append(group)
-                self.partial_groups[label] = []
-
-        if not drop_remaining:
-            for group in self.partial_groups.values():
-                if group:
-                    self.groups.append(group)
-
-    def __len__(self):
-        return len(self.groups)
-
-    def __getitem__(self, idx):
-        group = self.groups[idx]
-        samples = [self.original_dataset[i] for i in group]
-        samples_data = [sample[0] for sample in samples]
-        if self.average_grouped_samples:
-            data = torch.stack(samples_data)
-            data = data.mean(dim=0)
-        else:
-            data = torch.concat(samples_data, dim=0)
-        label = samples[0][1]
-
-        return data, label
+from .models.configurable_modules.classification_module import ClassificationModule
 
 
 # These are the sensors we identified as being particularly useful
@@ -224,17 +169,17 @@ def check_labels(list_of_labels):
                 f"Datasets have different labels: {labels} and {reference_labels}")
 
 
-def apply_dataset_wrappers_from_data_config(dataset, data_config):
+def apply_dataset_wrappers_from_data_config(dataset, data_config, split: str):
     # applies dataset wrappers from data config
     if ("averaged_samples" in data_config["general"] and "grouped_samples" in data_config["general"]):
         raise ValueError(
             "Only one grouping type can be used at a time. Please change data config")
     if ("averaged_samples" in data_config["general"] and data_config["general"]["averaged_samples"] > 1):
-        dataset = GroupedDataset(
-            dataset, grouped_samples=data_config["general"]["averaged_samples"], average_grouped_samples=True)
+        dataset = MyGroupedDataset(
+            dataset, grouped_samples=data_config["general"]["averaged_samples"], average_grouped_samples=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/grouped")) / f"{split}_grouped_{data_config['general']['averaged_samples']}.pt", shuffle=True)
     if ("grouped_samples" in data_config["general"] and data_config["general"]["grouped_samples"] > 1):
-        dataset = GroupedDataset(
-            dataset, grouped_samples=data_config["general"]["grouped_samples"], average_grouped_samples=False, drop_remaining=True)
+        dataset = MyGroupedDataset(
+            dataset, grouped_samples=data_config["general"]["grouped_samples"], average_grouped_samples=False, drop_remaining=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/grouped")) / f"{split}_grouped_{data_config['general']['grouped_samples']}.pt", shuffle=True)
     return dataset
 
 
@@ -278,7 +223,7 @@ def get_datasets_from_config(data_config):
         train_channel_stds = train_dataset.datasets[0].channel_stds
         train_labels_sorted = train_dataset.datasets[0].labels_sorted
         train_dataset = apply_dataset_wrappers_from_data_config(
-            train_dataset, data_config)
+            train_dataset, data_config, split="train")
     else:
         train_dataset = None
         train_labels_sorted = None
@@ -291,7 +236,7 @@ def get_datasets_from_config(data_config):
             check_labels(
                 [train_labels_sorted, val_dataset.datasets[0].labels_sorted])
         val_dataset = apply_dataset_wrappers_from_data_config(
-            val_dataset, data_config)
+            val_dataset, data_config, split="val")
     else:
         val_dataset = None
     if train_labels_sorted is None:  # HACKY FOR ARMENI COMPARISON
@@ -303,7 +248,7 @@ def get_datasets_from_config(data_config):
             check_labels(
                 [train_labels_sorted, test_dataset.datasets[0].labels_sorted])
         test_dataset = apply_dataset_wrappers_from_data_config(
-            test_dataset, data_config)
+            test_dataset, data_config, split="test")
     else:
         test_dataset = None
     return train_dataset, val_dataset, test_dataset, train_labels_sorted

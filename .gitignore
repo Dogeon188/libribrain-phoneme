@@ -12,6 +12,7 @@ wheels/
 .vscode/
 
 data
+data_preprocessed
 
 out/
 outputs/

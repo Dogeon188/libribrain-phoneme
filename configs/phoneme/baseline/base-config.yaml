@@ -41,6 +41,7 @@ data:
   general:
     inMemory: False
     averaged_samples: 0
+    state_cache_prefix: "./data_preprocessed/grouped_small"
 
 model:
   - conv1d:
@@ -106,7 +107,7 @@ trainer:
   max_epochs: 10
 
 general:
-  wandb: True
+  wandb: true
   output_path: "./out/phoneme-baseline"
   checkpoint_path: "./out/phoneme-baseline"
   seed: 42
