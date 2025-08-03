@@ -1,0 +1,26 @@
+[project]
+name = "libribrain-phoneme"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "anywidget>=0.9.18",
+    "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.7",
+    "lightning>=2.5.2",
+    "litmodels>=0.1.8",
+    "plotly>=6.2.0",
+    "pnpl>=0.0.4",
+    "scikit-learn>=1.7.0",
+    "wandb>=0.21.0",
+    "torch>=2.8.0",
+    "transformers>=4.48.3",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch" }
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/nightly/cu129"
