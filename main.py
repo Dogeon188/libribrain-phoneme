@@ -6,7 +6,7 @@ os.environ["PNPL_REMOTE_CONSTANTS_URL"] = "file:////home/dogeon/libribrain_phone
 
 
 @click.command()
-@click.argument("mode", type=click.Choice(['train', 'predict', 'submit'], case_sensitive=False))
+@click.argument("mode", type=click.Choice(['train', 'predict', 'submit', 'viz'], case_sensitive=False))
 @click.argument("config", type=str)
 @click.option("--run-id", type=int, help="Run ID for the hyperparameter optimization.")
 def main(mode, config, run_id):
@@ -39,6 +39,15 @@ def main(mode, config, run_id):
     # elif mode == 'submit':
     #     from libribrain_experiments.submit import main as submit_main
     #     submit_main(config)
+    elif mode == 'viz':
+        from viz import main as viz_main
+        result_pattern = f"val-best-{config}-hpo-{run_id}/results.json"
+        result_path = next(Path('./out').rglob(result_pattern), None)
+        if not result_path:
+            raise FileNotFoundError(f"No results found matching pattern: {result_pattern}")
+        print(f"Using results file: {result_path}")
+        viz_main(result_path)
+        
     else:
         raise ValueError(
             "Invalid mode. Choose from 'train', 'predict', or 'submit'.")
