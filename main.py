@@ -1,8 +1,10 @@
 import click
 from pathlib import Path
-import os
+from pnpl.datasets.libribrain2025 import constants_utils
 
-os.environ["PNPL_REMOTE_CONSTANTS_URL"] = "file:////home/dogeon/libribrain_phoneme/constants.json"
+constants_utils.set_remote_constants_url(
+    "file:////home/dogeon/libribrain_phoneme/constants.json")
+constants_utils.refresh_constants()
 
 
 @click.command()
