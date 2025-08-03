@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+.vscode/
+
+data
+
+out/
+outputs/
+wandb/
+lightning_logs/
+model/
+
+*.csv
