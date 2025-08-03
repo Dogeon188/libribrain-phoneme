@@ -16,6 +16,7 @@ dependencies = [
     "wandb>=0.21.0",
     "torch>=2.8.0",
     "transformers>=4.48.3",
+    "mne-bids>=0.16.0",
 ]
 
 [tool.uv.sources]

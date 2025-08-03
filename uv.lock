@@ -617,6 +617,7 @@ dependencies = [
     { name = "ipywidgets" },
     { name = "lightning" },
     { name = "litmodels" },
+    { name = "mne-bids" },
     { name = "plotly" },
     { name = "pnpl" },
     { name = "scikit-learn" },
@@ -632,6 +633,7 @@ requires-dist = [
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "lightning", specifier = ">=2.5.2" },
     { name = "litmodels", specifier = ">=0.1.8" },
+    { name = "mne-bids", specifier = ">=0.16.0" },
     { name = "plotly", specifier = ">=6.2.0" },
     { name = "pnpl", specifier = ">=0.0.4" },
     { name = "scikit-learn", specifier = ">=1.7.0" },
@@ -943,7 +945,7 @@ name = "nvidia-cudnn-cu12"
 version = "9.10.2.21"
 source = { registry = "https://download.pytorch.org/whl/nightly/cu129" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/nightly/nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl" },
@@ -954,7 +956,7 @@ name = "nvidia-cufft-cu12"
 version = "11.4.1.4"
 source = { registry = "https://download.pytorch.org/whl/nightly/cu129" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/nightly/cu129/nvidia_cufft_cu12-11.4.1.4-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl" },
@@ -981,9 +983,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.5.82"
 source = { registry = "https://download.pytorch.org/whl/nightly/cu129" }
 dependencies = [
-    { name = "nvidia-cublas-cu12" },
-    { name = "nvidia-cusparse-cu12" },
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-cublas-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-cusparse-cu12", marker = "sys_platform == 'linux'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/nightly/cu129/nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_x86_64.whl" },
@@ -994,7 +996,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.10.65"
 source = { registry = "https://download.pytorch.org/whl/nightly/cu129" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12" },
+    { name = "nvidia-nvjitlink-cu12", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/nightly/cu129/nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl" },
@@ -1393,7 +1395,7 @@ name = "pytorch-triton"
 version = "3.4.0+git11ec6354"
 source = { registry = "https://download.pytorch.org/whl/nightly/cu129" }
 dependencies = [
-    { name = "setuptools" },
+    { name = "setuptools", marker = "sys_platform == 'linux'" },
 ]
 wheels = [
     { url = "https://download.pytorch.org/whl/nightly/pytorch_triton-3.4.0%2Bgit11ec6354-cp312-cp312-linux_aarch64.whl" },

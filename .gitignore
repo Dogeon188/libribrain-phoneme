@@ -17,6 +17,6 @@ out/
 outputs/
 wandb/
 lightning_logs/
-model/
+models/
 
 *.csv
