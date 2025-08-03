@@ -1,0 +1,113 @@
+data:
+  datasets:
+    train:
+      - libribrain_phoneme:
+          data_path: "./data"
+          preprocessing_str: "bads+headpos+sss+notch+bp+ds"
+          label_type: "phoneme"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "train"
+          preload_files: false
+
+    val:
+      - libribrain_phoneme:
+          data_path: "./data"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "validation"
+          preload_files: false
+    test:
+      - libribrain_phoneme:
+          data_path: "./data"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "test"
+          preload_files: false
+  dataloader:
+    batch_size: 256
+    num_workers: 4
+  general:
+    inMemory: False
+    averaged_samples: 0
+
+model:
+  # data.shape = (, 306, num_samples=125)
+  - conv1d:
+      in_channels: 306
+      out_channels: 512
+      kernel_size: 7
+      stride: 1
+      padding: "same"
+  # data.shape = (, 512, 125)
+  - resnet_block:
+      model_config:
+        - elu:
+        - conv1d:
+            in_channels: 512
+            out_channels: 512
+            kernel_size: 3
+            stride: 1
+            padding: "same"
+        - elu:
+        # data.shape = (, 512, 125)
+        - conv1d:
+            in_channels: 512
+            out_channels: 512
+            kernel_size: 1
+            stride: 1
+            padding: "same"
+        # data.shape = (, 512, 125)
+  - elu:
+  # data.shape = (, 512, 125)
+  - permute:
+      dims: [0, 2, 1] # Change from (batch, channels, time) to (batch, time, channels)
+  # data.shape = (, 125, 512)
+  - positional_encoding:
+      d_model: 512
+      max_len: 125
+      dropout: 0.1
+  # data.shape = (, 125, 512)
+  - transformer_encoder:
+      encoder_layer:
+        - transformer_encoder_layer:
+            d_model: 512
+            nhead: 8
+            dim_feedforward: 2048
+            dropout: 0.1
+            activation: "relu"
+            batch_first: True
+      num_layers: 4
+  - linear:
+      in_features: 512
+      out_features: 39
+  - elu:
+  # data.shape = (, 125, 39)
+  - average_pool2d:
+      kernel_size: [125, 1] # Pooling over time dimension
+      stride: [125, 1] # Stride equal to kernel size to reduce to a single value per channel
+  # data.shape = (, 1, 39)
+  - flatten:
+      start_dim: 1 # Flatten from the second dimension onwards
+  # data.shape = (, 39)
+
+loss:
+  name: cross_entropy
+
+optimizer:
+  name: adam
+  config:
+    lr: 0.0001
+
+trainer:
+  max_epochs: 10
+
+general:
+  wandb: true
+  output_path: "./out/phoneme-megt"
+  checkpoint_path: "./out/phoneme-megt"
+  seed: 42
+  use_tf32: True
