@@ -1,0 +1,268 @@
+data:
+  datasets:
+    train:
+      - libribrain_phoneme:
+          data_path: "./data"
+          preprocessing_str: "bads+headpos+sss+notch+bp+ds"
+          label_type: "phoneme"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "train"
+          preload_files: false
+    val:
+      - libribrain_phoneme:
+          data_path: "./data"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "validation"
+          preload_files: false
+    test:
+      - libribrain_phoneme:
+          data_path: "./data"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "test"
+          preload_files: false
+  dataloader:
+    batch_size: 256
+    num_workers: 4
+  general:
+    inMemory: False
+    averaged_samples: 100
+
+model:
+  # data.shape = (, 306, num_samples=125)
+    - conv1d:
+        in_channels: 306
+        out_channels: 64
+        kernel_size: 7
+        stride: 2
+        padding: 3
+    - batch_norm1d:
+        num_features: 64
+    - relu:
+    - max_pool1d:
+        kernel_size: 3
+        stride: 2
+        padding: 1
+    
+    # Layer 1 - 64 channels
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 64
+              out_channels: 64
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 64
+          - relu:
+          - conv1d:
+              in_channels: 64
+              out_channels: 64
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 64
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 64
+              out_channels: 64
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 64
+          - relu:
+          - conv1d:
+              in_channels: 64
+              out_channels: 64
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 64
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 64
+              out_channels: 64
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 64
+          - relu:
+          - conv1d:
+              in_channels: 64
+              out_channels: 64
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 64
+    
+    # Layer 2 - 128 channels
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 64
+              out_channels: 128
+              kernel_size: 3
+              stride: 2
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+          - relu:
+          - conv1d:
+              in_channels: 128
+              out_channels: 128
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+        downsample:
+          - conv1d:
+              in_channels: 64
+              out_channels: 128
+              kernel_size: 1
+              stride: 2
+          - batch_norm1d:
+              num_features: 128
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 128
+              out_channels: 128
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+          - relu:
+          - conv1d:
+              in_channels: 128
+              out_channels: 128
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 128
+              out_channels: 128
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+          - relu:
+          - conv1d:
+              in_channels: 128
+              out_channels: 128
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 128
+              out_channels: 128
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+          - relu:
+          - conv1d:
+              in_channels: 128
+              out_channels: 128
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 128
+    
+    # Layer 3 - 256 channels
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 128
+              out_channels: 256
+              kernel_size: 3
+              stride: 2
+              padding: 1
+          - batch_norm1d:
+              num_features: 256
+          - relu:
+          - conv1d:
+              in_channels: 256
+              out_channels: 256
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 256
+        downsample:
+          - conv1d:
+              in_channels: 128
+              out_channels: 256
+              kernel_size: 1
+              stride: 2
+          - batch_norm1d:
+              num_features: 256
+    - resnet_block:
+        model_config:
+          - conv1d:
+              in_channels: 256
+              out_channels: 256
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 256
+          - relu:
+          - conv1d:
+              in_channels: 256
+              out_channels: 256
+              kernel_size: 3
+              stride: 1
+              padding: 1
+          - batch_norm1d:
+              num_features: 256
+    
+    # Global average pooling and classification
+    - adaptive_avg_pool1d:
+        output_size: 1
+    - flatten:
+    - linear:
+        in_features: 256
+        out_features: 39
+loss:
+  name: cross_entropy
+
+optimizer:
+  name: adam
+  config:
+    lr: 0.0001
+
+trainer:
+  max_epochs: 10
+
+general:
+  wandb: true
+  output_path: "./out/phoneme-resnet"
+  checkpoint_path: "./out/phoneme-resnet"
+  seed: 42
+  use_tf32: True

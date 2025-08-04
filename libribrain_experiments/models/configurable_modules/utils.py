@@ -87,6 +87,8 @@ def modules_from_config(modules: list[tuple[str, dict]]):
                 module = GELU()
             case "silu":
                 module = nn.SiLU()
+            case "softmax":
+                module = nn.Softmax(dim=-1)
             # dropout and normalization layers
             case "dropout":
                 module = nn.Dropout(**config)

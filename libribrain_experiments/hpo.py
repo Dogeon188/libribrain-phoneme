@@ -143,6 +143,16 @@ def main(config, run_index, search_space, run_name, project_name):
         best_model_metric_mode = "max"
 
     start_time = time.time()
+
+
+    # replace predefined block names with actual blocks
+    model_blocks = config_data.get("blocks", None)
+    if model_blocks is not None:
+        for i, module in enumerate(config_data["model"]):
+            if isinstance(module, dict) and list(module.keys())[0] in model_blocks:
+                block_name = list(module.keys())[0]
+                config_data["model"] = config_data["model"][:i] + model_blocks[block_name] + config_data["model"][i+1:]
+        
     trainer, best_module, module = run_training(
         train_loader, val_loader, config_data, len(labels), best_model_metric=best_model_metric, best_model_metric_mode=best_model_metric_mode)
     print("TRAINED MODEL in ", time.time() - start_time, " seconds")

@@ -1,2 +1,3 @@
+'("trainer", "max_epochs")': [10, 50]
 '("data", "general", "averaged_samples")': [0, 100, 50, 10]
 '("data", "dataloader", "batch_size")': [256, 128]
