@@ -10,7 +10,7 @@ Before starting the project, please run:
 ```sh
 uv sync
 ln -s /home/share/data/libribrain2025 $(pwd)/data
-ln -s /home/share/libribrain_phoneme_preprocessed $(pwd)$/data_preprocessed
+ln -s /home/share/libribrain_phoneme_preprocessed $(pwd)/data_preprocessed
 ```
 
 If you don't have `uv` installed, follow the instructions at [astral-sh/uv](https://github.com/astral-sh/uv).
