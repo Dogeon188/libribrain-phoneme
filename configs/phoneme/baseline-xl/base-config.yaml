@@ -29,14 +29,14 @@ data:
           preload_files: false
   dataloader:
     batch_size: 256
-    num_workers: 4
+    num_workers: 8
   general:
     inMemory: False
     averaged_samples: 100
-    repeat: 20
+    repeat: 5
     shuffle: True
     balance: True
-    augment: True
+    augment: False
 
 model:
   # data.shape = (, 306, num_samples=125)

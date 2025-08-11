@@ -183,7 +183,7 @@ def apply_dataset_wrappers_from_data_config(dataset, data_config, split: str, ba
             shuffle=True,
             balance=data_config["general"].get("balance", False),
             augment=data_config["general"].get("augment", False),
-            repeat=data_config["general"].get("repeat", 1))
+            repeat=data_config["general"].get("repeat", 1) if split == "train" else 1)
     if ("grouped_samples" in data_config["general"] and data_config["general"]["grouped_samples"] > 1):
         dataset = MyGroupedDatasetV3(
             dataset,
