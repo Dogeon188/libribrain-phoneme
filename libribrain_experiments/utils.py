@@ -1,11 +1,10 @@
 import random
 from pathlib import Path
 from pnpl.datasets import LibriBrainPhoneme, LibriBrainSpeech, LibriBrainCompetitionHoldout
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import ConcatDataset
 import json
 import os
 import torch
-from tqdm import tqdm
 import wandb
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
@@ -17,7 +16,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 import json
 
-from libribrain_experiments.grouped_dataset import MyGroupedDataset
+from libribrain_experiments.grouped_dataset import MyGroupedDatasetV3
 # from pnpl.datasets.grouped_dataset import GroupedDataset
 
 from .models.configurable_modules.classification_module import ClassificationModule
@@ -175,11 +174,27 @@ def apply_dataset_wrappers_from_data_config(dataset, data_config, split: str, ba
         raise ValueError(
             "Only one grouping type can be used at a time. Please change data config")
     if ("averaged_samples" in data_config["general"] and data_config["general"]["averaged_samples"] > 1):
-        dataset = MyGroupedDataset(
-            dataset, grouped_samples=data_config["general"]["averaged_samples"], average_grouped_samples=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/balance_grouped")) / f"{split}_grouped_{data_config['general']['averaged_samples']}.pt", shuffle=True, balance=balance, augment=augment)
+        dataset = MyGroupedDatasetV3(
+            dataset,
+            grouped_samples=data_config["general"]["averaged_samples"],
+            average_grouped_samples=True,
+            state_cache_path=Path(data_config["general"].get(
+                "state_cache_prefix", "./data_preprocessed/groupedv3")) / f"{split}_grouped_{data_config['general']['averaged_samples']}.pt",
+            shuffle=True,
+            balance=data_config["general"].get("balance", False),
+            augment=data_config["general"].get("augment", False),
+            repeat=data_config["general"].get("repeat", 1))
     if ("grouped_samples" in data_config["general"] and data_config["general"]["grouped_samples"] > 1):
-        dataset = MyGroupedDataset(
-            dataset, grouped_samples=data_config["general"]["grouped_samples"], average_grouped_samples=False, drop_remaining=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/balance_grouped")) / f"{split}_grouped_{data_config['general']['grouped_samples']}.pt", shuffle=True, balance=balance, augment=augment)
+        dataset = MyGroupedDatasetV3(
+            dataset,
+            grouped_samples=data_config["general"]["grouped_samples"],
+            average_grouped_samples=False,
+            drop_remaining=True,
+            state_cache_path=Path(data_config["general"].get(
+                "state_cache_prefix", "./data_preprocessed/groupedv3")) / f"{split}_grouped_{data_config['general']['grouped_samples']}.pt",
+            shuffle=True,
+            balance=balance,
+            augment=augment)
     return dataset
 
 
