@@ -3,7 +3,7 @@ from pathlib import Path
 from pnpl.datasets.libribrain2025 import constants_utils
 
 constants_utils.set_remote_constants_url(
-    "file:////home/dogeon/libribrain_phoneme/constants.json")
+    "file:/home/pomalo/phomeme/libribrain_phoneme/constants.json")
 constants_utils.refresh_constants()
 
 
