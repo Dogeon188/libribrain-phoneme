@@ -169,17 +169,17 @@ def check_labels(list_of_labels):
                 f"Datasets have different labels: {labels} and {reference_labels}")
 
 
-def apply_dataset_wrappers_from_data_config(dataset, data_config, split: str):
+def apply_dataset_wrappers_from_data_config(dataset, data_config, split: str, balance=False, augment=False):
     # applies dataset wrappers from data config
     if ("averaged_samples" in data_config["general"] and "grouped_samples" in data_config["general"]):
         raise ValueError(
             "Only one grouping type can be used at a time. Please change data config")
     if ("averaged_samples" in data_config["general"] and data_config["general"]["averaged_samples"] > 1):
         dataset = MyGroupedDataset(
-            dataset, grouped_samples=data_config["general"]["averaged_samples"], average_grouped_samples=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/grouped")) / f"{split}_grouped_{data_config['general']['averaged_samples']}.pt", shuffle=True)
+            dataset, grouped_samples=data_config["general"]["averaged_samples"], average_grouped_samples=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/balance_grouped")) / f"{split}_grouped_{data_config['general']['averaged_samples']}.pt", shuffle=True, balance=balance, augment=augment)
     if ("grouped_samples" in data_config["general"] and data_config["general"]["grouped_samples"] > 1):
         dataset = MyGroupedDataset(
-            dataset, grouped_samples=data_config["general"]["grouped_samples"], average_grouped_samples=False, drop_remaining=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/grouped")) / f"{split}_grouped_{data_config['general']['grouped_samples']}.pt", shuffle=True)
+            dataset, grouped_samples=data_config["general"]["grouped_samples"], average_grouped_samples=False, drop_remaining=True, state_cache_path=Path(data_config["general"].get("state_cache_prefix", "./data_preprocessed/balance_grouped")) / f"{split}_grouped_{data_config['general']['grouped_samples']}.pt", shuffle=True, balance=balance, augment=augment)
     return dataset
 
 
@@ -222,8 +222,9 @@ def get_datasets_from_config(data_config):
         train_channel_means = train_dataset.datasets[0].channel_means
         train_channel_stds = train_dataset.datasets[0].channel_stds
         train_labels_sorted = train_dataset.datasets[0].labels_sorted
+        # balance and augment parameters
         train_dataset = apply_dataset_wrappers_from_data_config(
-            train_dataset, data_config, split="train")
+            train_dataset, data_config, split="train", balance=False, augment=True)
     else:
         train_dataset = None
         train_labels_sorted = None

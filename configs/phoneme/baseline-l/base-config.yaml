@@ -29,10 +29,10 @@ data:
           preload_files: false
   dataloader:
     batch_size: 256
-    num_workers: 4
+    num_workers: 16
   general:
     inMemory: False
-    averaged_samples: 0
+    averaged_samples: 100
 
 model:
   # data.shape = (, 306, num_samples=125)
@@ -125,7 +125,7 @@ optimizer:
     lr: 0.0001
 
 trainer:
-  max_epochs: 10
+  max_epochs: 30
 
 general:
   wandb: True
