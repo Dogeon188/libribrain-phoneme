@@ -3,7 +3,8 @@ from pathlib import Path
 from pnpl.datasets.libribrain2025 import constants_utils
 import os
 
-constants_utils.set_remote_constants_url(f"file:/{os.path.dirname(__file__)}/constants.json")
+constants_utils.set_remote_constants_url(
+    f"{(Path(os.getcwd()) / 'constants.json').as_uri()}")
 constants_utils.refresh_constants()
 
 
