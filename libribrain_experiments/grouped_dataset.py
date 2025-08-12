@@ -19,20 +19,20 @@ class MyGroupedDatasetV3(torch.utils.data.Dataset):
             # sampler=SequentialSampler(original_dataset),
             num_workers=(os.cpu_count() if num_workers < 0 else num_workers),
             pin_memory=True,
-            prefetch_factor=16,
-            in_order=False
+            prefetch_factor=256,
+            in_order=True  # important! ensure idx below is correct
         )
 
         for idx, (_, label) in enumerate(
             tqdm(loader,
                  desc="Grouping samples by label",
-                 total=len(original_dataset))):
+                 total=len(original_dataset), leave=False)):
             lbl = int(label.item())
             label_to_indices[lbl].append(idx)
 
         for label, indices in label_to_indices.items():
             label_to_indices[label] = np.array(indices, dtype=np.int64)
-            label_to_indices[label].sort()
+            # label_to_indices[label].sort()
 
         return dict(label_to_indices)
 
@@ -130,6 +130,7 @@ class MyGroupedDatasetV3(torch.utils.data.Dataset):
             label: indices.reshape(-1, grouped_samples)
             for label, indices in self.labels_to_indices.items()
         }
+
         self.group_indices = np.ndarray(shape=(0, 2), dtype=np.int64)
         for label, indices in self.labels_to_indices.items():
             pairs = np.column_stack((
@@ -150,9 +151,10 @@ class MyGroupedDatasetV3(torch.utils.data.Dataset):
 
         # Get samples
         samples = [self.original_dataset[i] for i in indices if i != -48763]
-        if not samples:
-            raise ValueError(
-                f"Group {idx} with label {label} has no valid samples.")
+
+        # if not samples:
+        #     raise ValueError(
+        #         f"Group {idx} with label {label} has no valid samples.")
 
         # Stack data
         samples_data = [sample[0] for sample in samples]
