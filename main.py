@@ -11,7 +11,7 @@ constants_utils.refresh_constants()
 @click.command()
 @click.argument("mode", type=click.Choice(['train', 'predict', 'submit', 'viz'], case_sensitive=False))
 @click.argument("config", type=str)
-@click.option("--run-id", type=int, help="Run ID for the hyperparameter optimization.")
+@click.argument("run_id", type=int)
 def main(mode, config, run_id):
     if mode == 'train':
         from libribrain_experiments.hpo import main as hpo_main

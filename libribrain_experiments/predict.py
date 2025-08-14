@@ -3,7 +3,7 @@ import click
 import re
 import time
 from torch.utils.data import DataLoader
-from pnpl.datasets import LibriBrainCompetitionHoldout
+from pnpl.datasets import LibriBrainCompetitionHoldout, LibriBrainPhoneme
 from lightning.pytorch.accelerators import find_usable_cuda_devices
 import yaml
 from tqdm import tqdm
@@ -37,25 +37,6 @@ def generate_submission(name: str = "submission", model: ClassificationModule = 
             logits = model(batch)
             probs = torch.softmax(logits, dim=-1)
             submission_preds.extend(probs.cpu().numpy())
-    
-    # predictions = []
-
-    # print(f"Generating predictions for {len(dataset)} segments...")
-    # print(f"Using batch size: {batch_size}, device: {device}")
-
-    # with torch.no_grad():
-    #     for batch_idx, batch_data in enumerate(tqdm(dataloader, desc="Processing batches")):
-    #         # batch_data shape: (batch_size, 306, 125)
-    #         batch_data = batch_data.to(device)
-
-    #         # Forward pass
-    #         logits = model(batch_data)  # Shape: (batch_size, 39)
-    #         probs = torch.softmax(logits, dim=1)  # Convert to probabilities
-
-    #         # Move back to CPU and store individual predictions
-    #         probs_cpu = probs.cpu()
-    #         for i in range(probs_cpu.shape[0]):
-    #             predictions.append(probs_cpu[i])  # Shape: (39,)
 
     print("Generated submission predictions in ",
           time.time() - start_time, " seconds")

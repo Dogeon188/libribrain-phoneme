@@ -159,7 +159,8 @@ class MyGroupedDatasetV3(torch.utils.data.Dataset):
         # Stack data
         samples_data = [sample[0] for sample in samples]
         if self.average_grouped_samples:
-            data = torch.stack(samples_data).mean(dim=0)
+            # Why mul by sqrt? See examples/StdThenAvg.ipynb
+            data = torch.stack(samples_data).mean(dim=0) * np.sqrt(self.grouped_samples)
         else:
             data = torch.concat(samples_data, dim=0)
 
