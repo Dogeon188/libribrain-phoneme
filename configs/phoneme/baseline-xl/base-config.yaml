@@ -25,7 +25,7 @@ data:
           standardize: true
           tmin: 0.0
           tmax: 0.5
-          include_run_keys: [["0", "12", "Sherlock1", "2"]]
+          partition: "test"
           preload_files: false
   dataloader:
     batch_size: 256
