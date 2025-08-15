@@ -67,7 +67,7 @@ def main(pred1_path: Path, pred2_path: Path):
     
     # instantiate the validation dataset to get the ordered labels
     val_dataset = LibriBrainPhoneme(
-        data_path="data/",
+        data_path="data",
         partition="validation",
         tmin=0.0,
         tmax=0.5
