@@ -1,14 +1,13 @@
 from pathlib import Path
 
+import lightning
 from tqdm import tqdm
 
 from libribrain_experiments.models.configurable_modules.classification_module import ClassificationModule
 import yaml
 import torch
-from torch.utils.data import DataLoader
 from torchmetrics.functional.classification import f1_score
 from lightning.pytorch.accelerators import find_usable_cuda_devices
-import click
 from pnpl.datasets import LibriBrainPhoneme
 from libribrain_experiments.grouped_dataset import MyGroupedDatasetV3
 
@@ -21,29 +20,37 @@ def main(config: Path, checkpoint_path: Path):
         raise FileNotFoundError(
             "Config file not found. Please provide a valid path")
 
+    lightning.seed_everything(config_data["general"]["seed"])
+
+    train_dataset = LibriBrainPhoneme(
+        data_path="./data/",
+        tmin=0.0,
+        tmax=0.5,
+        standardize=True,
+        partition="train",
+    )
+
     raw_val_dataset = LibriBrainPhoneme(
         data_path="./data/",
         tmin=0.0,
         tmax=0.5,
         standardize=True,
         partition="validation",
+        channel_means=train_dataset.channel_means,
+        channel_stds=train_dataset.channel_stds,
     )
     val_dataset = MyGroupedDatasetV3(
         raw_val_dataset,
         grouped_samples=100,
         drop_remaining=False,
         average_grouped_samples=True,
-        state_cache_path=Path("./data_preprocessed/groupedv3/val_grouped_100.pt"),
-        # balance=True,
+        state_cache_path=Path(
+            "./data_preprocessed/groupedv3/val_grouped_100.pt"),
         shuffle=True,
     )
 
-    dataloader = DataLoader(
-        val_dataset,
-        batch_size=256,
-        shuffle=False,
-        num_workers=4
-    )
+    val_loader = torch.utils.data.DataLoader(
+        val_dataset, **config_data["data"]["dataloader"])
 
     model = ClassificationModule.load_from_checkpoint(checkpoint_path)
     model = model.to(find_usable_cuda_devices()[0])
@@ -52,7 +59,7 @@ def main(config: Path, checkpoint_path: Path):
     all_preds = []
     model.eval()
     with torch.no_grad():
-        for batch in tqdm(dataloader, leave=False):
+        for batch in tqdm(val_loader, leave=False):
             x, y = batch[0], batch[1]
             x = x.to(model.device)
             y = y.to(model.device)
@@ -72,6 +79,7 @@ def main(config: Path, checkpoint_path: Path):
 
     print(f"Validation Accuracy: {accuracy:.4f}")
     print(f"Validation F1 Macro: {f1_macro:.4f}")
+
 
 def cli(config, checkpoint_path):
     """

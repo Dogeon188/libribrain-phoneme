@@ -127,9 +127,9 @@ def main(config, run_index, search_space, run_name, project_name):
         train_dataset, shuffle=True, **config_data["data"]["dataloader"])
     val_loader = torch.utils.data.DataLoader(
         val_dataset, **config_data["data"]["dataloader"])
-    adapt_config_to_data(config_data, train_loader, labels)
 
     start_time = time.time()
+    adapt_config_to_data(config_data, train_loader, labels)
     print("ADAPTED CONFIG TO DATA in ", time.time() - start_time, " seconds")
 
     if "best_model_metrics" in config_data["general"]:
