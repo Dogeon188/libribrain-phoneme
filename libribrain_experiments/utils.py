@@ -5,6 +5,7 @@ from torch.utils.data import ConcatDataset
 import json
 import os
 import torch
+from tqdm import tqdm
 import wandb
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
@@ -383,7 +384,7 @@ def run_validation(val_loader, module, labels, samples_per_class=None, name="val
     all_targets = []
     all_probas = []
     with torch.no_grad():
-        for batch in val_loader:
+        for batch in tqdm(val_loader):
             x, y = batch[0], batch[1]
             x = x.to(module.device)
             y = y.to(module.device)

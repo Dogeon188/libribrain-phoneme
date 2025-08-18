@@ -9,7 +9,7 @@ constants_utils.refresh_constants()
 
 
 @click.command()
-@click.argument("mode", type=click.Choice(['train', 'predict', 'submit', 'viz'], case_sensitive=False))
+@click.argument("mode", type=click.Choice(['train', 'predict', 'submit', 'viz', 'val'], case_sensitive=False))
 @click.argument("config", type=str)
 @click.argument("run_id", type=int)
 def main(mode, config, run_id):
@@ -41,6 +41,27 @@ def main(mode, config, run_id):
         config_base = Path(f'./configs/phoneme/{config}')
         config_path = config_base / "submission.yaml"
         predict_main(config_path, ckpt)
+    elif mode == 'val':
+        from libribrain_experiments.val import main as val_main
+        ckpt_base_name = f"{config}-hpo-{run_id}"
+        ckpt_pattern = f"best-*-{ckpt_base_name}-*.ckpt"
+        ckpts = list(Path('./out').rglob(ckpt_pattern))
+        if not ckpts:
+            raise FileNotFoundError(
+                f"No checkpoints found matching pattern: {ckpt_pattern}")
+        ckpt_postfix = max(
+            [ckpt.stem.split('val_f1_macro=')[-1] for ckpt in ckpts],
+            key=lambda x: float(x.split('-')[-1])
+        )
+        ckpt = next(
+            ckpt for ckpt in ckpts if f"val_f1_macro={ckpt_postfix}" in ckpt.stem)
+        print(f"Using checkpoint: {ckpt}")
+        config_base = Path(f'./configs/phoneme/{config}')
+        config_path = config_base / "submission.yaml"
+        val_main(
+            config=config_base / "base-config.yaml",
+            checkpoint_path=ckpt,
+        )
     elif mode == 'viz':
         from viz import main as viz_main
         result_pattern = f"val-best-{config}-hpo-{run_id}/results.json"
@@ -50,10 +71,8 @@ def main(mode, config, run_id):
                 f"No results found matching pattern: {result_pattern}")
         print(f"Using results file: {result_path}")
         viz_main(result_path)
-
     else:
-        raise ValueError(
-            "Invalid mode. Choose from 'train', 'predict', or 'submit'.")
+        pass
 
 
 if __name__ == "__main__":
