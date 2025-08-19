@@ -9,7 +9,7 @@ constants_utils.refresh_constants()
 
 
 @click.command()
-@click.argument("mode", type=click.Choice(['train', 'predict', 'submit', 'viz', 'val'], case_sensitive=False))
+@click.argument("mode", type=click.Choice(['train', 'predict', 'viz', 'val'], case_sensitive=False))
 @click.argument("config", type=str)
 @click.argument("run_id", type=int)
 def main(mode, config, run_id):
