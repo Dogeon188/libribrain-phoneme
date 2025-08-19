@@ -1,13 +1,13 @@
 from pathlib import Path
 import click
-import re
 import time
 from torch.utils.data import DataLoader
-from pnpl.datasets import LibriBrainCompetitionHoldout, LibriBrainPhoneme
+from pnpl.datasets import LibriBrainCompetitionHoldout
 from lightning.pytorch.accelerators import find_usable_cuda_devices
 import yaml
 from tqdm import tqdm
 import torch
+from pnpl.datasets import LibriBrainPhoneme
 
 from .models.configurable_modules.classification_module import ClassificationModule
 
@@ -16,9 +16,21 @@ def generate_submission(name: str = "submission", model: ClassificationModule = 
     """
     Generates a submission file for the LibriBrain competition holdout dataset.
     """
-    # First, instantiate the Competition Holdout dataset
     print("Generating submission file...")
-    submission_dataset = LibriBrainCompetitionHoldout(**config["data"]["dataset"])
+
+    # First, instantiate the Competition Holdout dataset
+    train_dataset = LibriBrainPhoneme(
+        data_path="./data/",
+        tmin=0.0,
+        tmax=0.5,
+        standardize=True,
+        partition="train",
+    )
+    submission_dataset = LibriBrainCompetitionHoldout(
+        channel_means=train_dataset.channel_means,
+        channel_stds=train_dataset.channel_stds,
+        **config["data"]["dataset"]
+    )
 
     dataset_loader = DataLoader(
         submission_dataset, **config["data"]["dataloader"])
