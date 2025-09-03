@@ -8,6 +8,7 @@ import torch
 from tqdm import tqdm
 import wandb
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelSummary
 from pytorch_lightning.loggers import WandbLogger
 from torchmetrics import Accuracy, F1Score, Recall
 from torchmetrics.classification import MulticlassAUROC, BinaryAUROC
@@ -21,6 +22,7 @@ from libribrain_experiments.grouped_dataset import MyGroupedDatasetV3
 # from pnpl.datasets.grouped_dataset import GroupedDataset
 
 from .models.configurable_modules.classification_module import ClassificationModule
+from .models.scripted_modules import scripted_modules
 
 
 # These are the sensors we identified as being particularly useful
@@ -182,8 +184,10 @@ def apply_dataset_wrappers_from_data_config(dataset, data_config, split: str, ba
             state_cache_path=Path(data_config["general"].get(
                 "state_cache_prefix", "./data_preprocessed/groupedv3")) / f"{split}_grouped_{data_config['general']['averaged_samples']}.pt",
             shuffle=True,
-            balance=data_config["general"].get("balance", False) if split == "train" else False,
-            augment=data_config["general"].get("augment", False) if split == "train" else False,
+            balance=data_config["general"].get(
+                "balance", False) if split == "train" else False,
+            augment=data_config["general"].get(
+                "augment", False) if split == "train" else False,
             repeat=data_config["general"].get("repeat", 1) if split == "train" else 1)
     if ("grouped_samples" in data_config["general"] and data_config["general"]["grouped_samples"] > 1):
         dataset = MyGroupedDatasetV3(
@@ -321,8 +325,16 @@ def get_label_distribution(train_loader, n_classes):
 
 def run_training(train_loader, val_loader, config, n_classes, best_model_metric="val_f1_macro", module=None, best_model_metric_mode="max"):
     if module is None:
-        module = ClassificationModule(
-            model_config=config["model"], n_classes=n_classes, optimizer_config=config["optimizer"], loss_config=config["loss"])
+        # scripted model from `.models.classification_module`
+        if type(config["model"]) is dict:
+            module = scripted_modules[config["model"]["name"]](
+                **config["model"].get("params", {}))
+            use_scripted = True
+        # configurable model from `.models.configurable_modules`
+        elif type(config["model"]) is list:
+            module = ClassificationModule(
+                model_config=config["model"], n_classes=n_classes, optimizer_config=config["optimizer"], loss_config=config["loss"])
+            use_scripted = False
 
     logger = False
     if (config["general"]["wandb"]):
@@ -347,8 +359,6 @@ def run_training(train_loader, val_loader, config, n_classes, best_model_metric=
         )
         callbacks.append(checkpoint_callback)
 
-    from pytorch_lightning.callbacks import ModelSummary
-
     callbacks.append(ModelSummary(max_depth=100))
 
     trainer_config = config["trainer"]
@@ -369,9 +379,14 @@ def run_training(train_loader, val_loader, config, n_classes, best_model_metric=
 
     print("Debug message: loading: ", str(
         checkpoint_callback.best_model_path,))
-    best_module = ClassificationModule.load_from_checkpoint(
-        checkpoint_callback.best_model_path,
-    )
+    if use_scripted:
+        best_module = scripted_modules[config["model"]["name"]].load_from_checkpoint(
+            checkpoint_callback.best_model_path,
+        )
+    else:
+        best_module = ClassificationModule.load_from_checkpoint(
+            checkpoint_callback.best_model_path,
+        )
 
     return trainer, best_module, module
 
