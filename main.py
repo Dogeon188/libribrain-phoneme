@@ -39,8 +39,13 @@ def main(mode, config, run_id):
             ckpt for ckpt in ckpts if f"val_f1_macro={ckpt_postfix}" in ckpt.stem)
         print(f"Using checkpoint: {ckpt}")
         config_base = Path(f'./configs/phoneme/{config}')
-        config_path = config_base / "submission.yaml"
-        predict_main(config_path, ckpt)
+        predict_main(
+            model_config_path=config_base / "base-config.yaml",
+            search_space=config_base / "search-space.yaml",
+            run_index=run_id,
+            submission_config_path=config_base / "submission.yaml",
+            checkpoint_path=ckpt
+        )
     elif mode == 'val':
         from libribrain_experiments.val import main as val_main
         ckpt_base_name = f"{config}-hpo-{run_id}"
@@ -57,7 +62,6 @@ def main(mode, config, run_id):
             ckpt for ckpt in ckpts if f"val_f1_macro={ckpt_postfix}" in ckpt.stem)
         print(f"Using checkpoint: {ckpt}")
         config_base = Path(f'./configs/phoneme/{config}')
-        config_path = config_base / "submission.yaml"
         val_main(
             config=config_base / "base-config.yaml",
             checkpoint_path=ckpt,

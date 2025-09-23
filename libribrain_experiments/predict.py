@@ -1,6 +1,7 @@
 from pathlib import Path
 import click
 import time
+import numpy as np
 from torch.utils.data import DataLoader
 from pnpl.datasets import LibriBrainCompetitionHoldout
 from lightning.pytorch.accelerators import find_usable_cuda_devices
@@ -8,6 +9,9 @@ import yaml
 from tqdm import tqdm
 import torch
 from pnpl.datasets import LibriBrainPhoneme
+
+from libribrain_experiments.hpo import get_run, load_search_space, runs_configs_from_search_space
+from libribrain_experiments.models.scripted_modules import scripted_modules
 
 from .models.configurable_modules.classification_module import ClassificationModule
 
@@ -59,16 +63,35 @@ def generate_submission(name: str = "submission", model: ClassificationModule = 
     )
 
 
-def main(config_path: Path, checkpoint_path: Path):
+def main(model_config_path: Path, search_space: Path, run_index: int, submission_config_path: Path, checkpoint_path: Path):
     try:
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
+        with open(model_config_path, 'r') as f:
+            model_config_data = yaml.safe_load(f)
     except FileNotFoundError:
         raise FileNotFoundError(
             "Config file not found. Please provide a valid path")
 
-    model = ClassificationModule.load_from_checkpoint(checkpoint_path)
-    generate_submission(name=checkpoint_path.stem, model=model, config=config)
+    try:
+        with open(submission_config_path, 'r') as f:
+            submission_config_data = yaml.safe_load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            "Config file not found. Please provide a valid path")
+
+    search_space_data = load_search_space(search_space)
+    run_configs = runs_configs_from_search_space(search_space_data)
+    if (run_index is None):
+        run_index = np.random.randint(0, len(run_configs))
+    model_config_data = get_run(model_config_data, run_configs, run_index)
+
+    if type(model_config_data["model"]) is dict:
+        model_class = scripted_modules[model_config_data["model"]["name"]]
+        model = model_class.load_from_checkpoint(checkpoint_path)
+    elif type(model_config_data["model"]) is list:
+        model = ClassificationModule.load_from_checkpoint(checkpoint_path)
+
+    generate_submission(name=checkpoint_path.stem,
+                        model=model, config=submission_config_data)
 
 
 @click.command()

@@ -253,6 +253,7 @@ def get_datasets_from_config(data_config):
     if "val" in datasets_config:
         val_dataset = get_dataset_partition_from_config(
             datasets_config["val"], train_channel_means, train_channel_stds)
+        # val_dataset = get_dataset_partition_from_config(datasets_config["val"])
         if train_labels_sorted is not None:
             check_labels(
                 [train_labels_sorted, val_dataset.datasets[0].labels_sorted])
@@ -263,8 +264,9 @@ def get_datasets_from_config(data_config):
     if train_labels_sorted is None:  # HACKY FOR ARMENI COMPARISON
         train_labels_sorted = val_dataset.datasets[0].labels_sorted
     if "test" in datasets_config:
-        test_dataset = get_dataset_partition_from_config(
-            datasets_config["test"], train_channel_means, train_channel_stds)
+        # test_dataset = get_dataset_partition_from_config(
+        #     datasets_config["test"], train_channel_means, train_channel_stds)
+        test_dataset = get_dataset_partition_from_config(datasets_config["test"])
         if train_labels_sorted is not None:
             check_labels(
                 [train_labels_sorted, test_dataset.datasets[0].labels_sorted])
