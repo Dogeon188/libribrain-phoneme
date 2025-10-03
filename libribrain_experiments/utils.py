@@ -244,7 +244,7 @@ def get_datasets_from_config(data_config):
         train_labels_sorted = train_dataset.datasets[0].labels_sorted
         # balance and augment parameters
         train_dataset = apply_dataset_wrappers_from_data_config(
-            train_dataset, data_config, split="train", balance=False, augment=True)
+            train_dataset, data_config, split="train", balance=True, augment=False)
     else:
         train_dataset = None
         train_labels_sorted = None
