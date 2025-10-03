@@ -111,19 +111,27 @@ model:
       kernel_size: 4
       padding: 0
   - relu:
-  - dropout:
-      p: 0.5
+  # - dropout:
+  #     p: 0.5
   - flatten:
   # data.shape = (, 1024)
+  - lstm:
+      input_size: 1024
+      hidden_size: 512
+      num_layers: 2
+      bias: true
+      batch_first: true
+      dropout: 0.5
+      bidirectional: false
   - linear:
-      in_features: 1024
+      in_features: 512
       out_features: 39
 
 loss:
   name: cross_entropy
   
 optimizer:
-  name: adamw
+  name: adam
   config:
     lr: 0.0001
 

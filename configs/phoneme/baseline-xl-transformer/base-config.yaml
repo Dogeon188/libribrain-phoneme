@@ -1,0 +1,111 @@
+data:
+  datasets:
+    train:
+      - libribrain_phoneme:
+          data_path: "./data"
+          preprocessing_str: "bads+headpos+sss+notch+bp+ds"
+          label_type: "phoneme"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "train"
+          preload_files: true
+
+    val:
+      - libribrain_phoneme:
+          data_path: "./data"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "validation"
+          preload_files: true
+    test:
+      - libribrain_phoneme:
+          data_path: "./data"
+          standardize: true
+          tmin: 0.0
+          tmax: 0.5
+          partition: "test"
+          preload_files: false
+  dataloader:
+    batch_size: 256
+    num_workers: 8
+  general:
+    inMemory: False
+    averaged_samples: 100
+    repeat: 5
+    shuffle: True
+    balance: True
+    augment: False
+
+
+model:
+  # Feature Encoder (Wave2Vec style)
+  - conv1d:
+      in_channels: 306
+      out_channels: 128
+      kernel_size: 10
+      stride: 2
+      padding: 4
+  - elu:
+  - conv1d:
+      in_channels: 128
+      out_channels: 256
+      kernel_size: 8
+      stride: 2
+      padding: 3
+  - elu:
+  - conv1d:
+      in_channels: 256
+      out_channels: 512
+      kernel_size: 4
+      stride: 1
+      padding: 1
+  - elu:
+
+  # permute for transformer
+  - permute:
+      dims: [2, 0, 1]  # (batch, channels, time) -> (time, batch, d_model)
+
+  # Transformer Context Network
+  - transformer_encoder:
+      encoder_layer:
+        - transformer_encoder_layer:
+            d_model: 512
+            nhead: 8
+            dim_feedforward: 2048
+            dropout: 0.1
+            activation: "relu"
+            batch_first: True
+      num_layers: 4
+
+  # permute back
+  - permute:
+      dims: [1, 2, 0]  # -> (batch, channels, time)
+
+  # Pooling + Classifier
+  - adaptive_avg_pool1d:
+      output_size: 1
+  - flatten: {}
+  - linear:
+      in_features: 512
+      out_features: 39
+
+
+loss:
+  name: cross_entropy
+  
+optimizer:
+  name: adamw
+  config:
+    lr: 0.0003
+
+trainer:
+  max_epochs: 30
+
+general:
+  wandb: True
+  output_path: "./out/phoneme-baseline-xl-transformer"
+  checkpoint_path: "./out/phoneme-baseline-xl-transformer"
+  seed: 42
+  use_tf32: True

@@ -191,6 +191,44 @@ class MyGroupedDatasetV3(torch.utils.data.Dataset):
                 data = aug_fn(data)
         return data
 
+    # data augmentation
+    # @staticmethod
+    # def apply_augmentation_by_id(data, aug_id: int):
+    #     aug_fns = [
+    #         MyGroupedDatasetV3.add_gaussian_noise,
+    #         MyGroupedDatasetV3.time_shift,
+    #         MyGroupedDatasetV3.time_mask,
+    #         MyGroupedDatasetV3.amplitude_scaling,
+    #         MyGroupedDatasetV3.channel_dropout,
+    #         lambda x: MyGroupedDatasetV3.frequency_band_perturb(
+    #             x, bands=[(8, 12), (13, 30)], scale_range=(0.8, 1.2))
+    #     ]
+
+    #     if not (0 <= aug_id < len(aug_fns)):
+    #         raise ValueError(f"aug_id must be between 0 and {len(aug_fns)-1}")
+
+    #     data = data.clone()  # avoid modifying original
+    #     data = aug_fns[aug_id](data)
+    #     return data
+
+
+    # data augmentation
+    # @staticmethod
+    # def apply_augmentations(data):
+    #     aug_fns = [
+    #         MyGroupedDatasetV3.time_mask,
+    #         MyGroupedDatasetV3.channel_dropout
+    #     ]
+
+    #     # choose a random subset of augmentations to apply
+    #     k = np.random.random_sample((len(aug_fns),)) < 0.5
+    #     data = data.clone()  # avoid modifying original data
+    #     for i, aug_fn in enumerate(aug_fns):
+    #         if k[i]:
+    #             data = aug_fn(data)
+    #     return data
+
+
     @staticmethod
     def add_gaussian_noise(data, noise_std=0.01):
         return data + torch.randn_like(data) * noise_std
