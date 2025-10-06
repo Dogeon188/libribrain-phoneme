@@ -1,6 +1,5 @@
 import torch
 from torch import nn, optim, stft
-from scipy.signal import stft as stft_
 
 from .base_module import BaseClassificationModule, N_CLASSES, N_CHANNELS
 

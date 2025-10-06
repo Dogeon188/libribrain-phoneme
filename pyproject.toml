@@ -18,6 +18,7 @@ dependencies = [
     "transformers>=4.48.3",
     "mne-bids>=0.16.0",
     "nbformat>=4.2.0",
+    "ptwt>=1.0.1",
 ]
 
 [tool.uv.sources]
