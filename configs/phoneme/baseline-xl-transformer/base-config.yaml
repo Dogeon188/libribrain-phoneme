@@ -101,7 +101,7 @@ optimizer:
     lr: 0.0003
 
 trainer:
-  max_epochs: 30
+  max_epochs: 10
 
 general:
   wandb: True

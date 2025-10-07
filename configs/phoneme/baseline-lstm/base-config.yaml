@@ -136,11 +136,11 @@ optimizer:
     lr: 0.0001
 
 trainer:
-  max_epochs: 30
+  max_epochs: 10
 
 general:
   wandb: True
-  output_path: "./out/phoneme-baseline-xl"
-  checkpoint_path: "./out/phoneme-baseline-xl"
+  output_path: "./out/phoneme-baseline-lstm"
+  checkpoint_path: "./out/phoneme-baseline-lstm"
   seed: 42
   use_tf32: True
