@@ -1,6 +1,6 @@
 # LibriBrain 2025
 
-The code is mmodified from [neural-processing-lab/libribrain-experiments](https://github.com/neural-processing-lab/libribrain-experiments). For details of the competition, see the [LibriBrain 2025 website](https://neural-processing-lab.github.io/2025-libribrain-competition/).
+The code is modified from [neural-processing-lab/libribrain-experiments](https://github.com/neural-processing-lab/libribrain-experiments). For details of the competition, see the [LibriBrain 2025 website](https://neural-processing-lab.github.io/2025-libribrain-competition/).
 
 
 ## Installation
