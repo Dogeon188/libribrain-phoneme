@@ -262,7 +262,7 @@ def get_datasets_from_config(data_config):
     else:
         val_dataset = None
     if train_labels_sorted is None:  # HACKY FOR ARMENI COMPARISON
-        train_labels_sorted = val_dataset.datasets[0].labels_sorted
+        train_labels_sorted = val_dataset.original_dataset.datasets[0].labels_sorted
     if "test" in datasets_config:
         # test_dataset = get_dataset_partition_from_config(
         #     datasets_config["test"], train_channel_means, train_channel_stds)

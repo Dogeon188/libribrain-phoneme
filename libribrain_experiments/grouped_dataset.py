@@ -158,6 +158,12 @@ class MyGroupedDatasetV3(torch.utils.data.Dataset):
 
         # Stack data
         samples_data = [sample[0] for sample in samples]
+        if not samples_data:
+            # Option A: Return a zero tensor and a dummy label (safest for DataLoader)
+            # Adjust the shape to match your MEG data (e.g., [channels, time])
+            dummy_shape = self.original_dataset[0][0].shape 
+            return torch.zeros(dummy_shape), torch.tensor(label)
+
         if self.average_grouped_samples:
             # Why mul by sqrt? See examples/StdThenAvg.ipynb
             # nope.

@@ -62,8 +62,8 @@ def train_mapper_dataloader(
     device="cuda",
     loss_type="mmd"
 ):
-    source_loader = DataLoader(source_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
-    target_loader = DataLoader(target_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+    source_loader = DataLoader(source_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=4)
+    target_loader = DataLoader(target_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=4)
 
     model = DistributionMapper().to(device)
     optimizer = optim.Adam(model.parameters(), lr=1e-4)
@@ -152,18 +152,21 @@ def visualize_distribution_batch(source_dataset, target_dataset, mapper, batch_s
     mapped_reduced = reduced[n:2*n]
     tgt_reduced = reduced[2*n:]
 
-    plt.figure(figsize=(8, 8))
-    plt.scatter(src_reduced[:, 0], src_reduced[:, 1], 
-                label="Source", color="red", s=50, alpha=0.7, edgecolors="k")
-    plt.scatter(mapped_reduced[:, 0], mapped_reduced[:, 1], 
-                label="Mapped Source", color="blue", s=50, alpha=0.7, edgecolors="k")
-    plt.scatter(tgt_reduced[:, 0], tgt_reduced[:, 1], 
-                label="Target", color="green", s=50, alpha=0.7, edgecolors="k")
+    plt.figure(figsize=(6, 6))
+    plt.scatter(src_reduced[:, 0], src_reduced[:, 1],
+                label="Source", color="red", s=30, alpha=0.7, edgecolors="k", linewidths=0.5)
+    plt.scatter(mapped_reduced[:, 0], mapped_reduced[:, 1],
+                label="Mapped Source", color="blue", s=30, alpha=0.7, edgecolors="k", linewidths=0.5)
+    plt.scatter(tgt_reduced[:, 0], tgt_reduced[:, 1],
+                label="Target", color="green", s=30, alpha=0.7, edgecolors="k", linewidths=0.5)
 
-    plt.legend(fontsize=12)
-    plt.title("PCA Projection (One Batch): Source vs Mapped Source vs Target", fontsize=14)
-    plt.tight_layout()
-    plt.savefig("batch_distribution.png", dpi=300)
+    plt.legend(fontsize=14, frameon=True, loc="best")
+    plt.title("PCA Projection (One Batch)\nSource vs Mapped Source vs Target", fontsize=16, pad=12)
+    plt.xlabel("Principal Component 1", fontsize=14)
+    plt.ylabel("Principal Component 2", fontsize=14)
+    plt.tick_params(axis='both', which='major', labelsize=12)
+    plt.tight_layout(pad=1.5)
+    plt.savefig("batch_distribution.png", dpi=300, bbox_inches='tight')
     plt.show()
     print("Saved as batch_distribution.png")
 
@@ -178,7 +181,8 @@ if __name__ == "__main__":
         standardize=True,
         tmin=0.0,
         tmax=0.5,
-        preload_files=True
+        preload_files=True,
+        partition="train"
     )
 
     target_dataset = MyGroupedDatasetV3(
@@ -187,16 +191,24 @@ if __name__ == "__main__":
         drop_remaining=False,
         state_cache_path=Path("/home/pomalo/libribrain_phoneme/libribrain_phoneme/data_preprocessed/groupedv3/train_grouped_100.pt"),
         average_grouped_samples=True,
-        balance=False,
+        balance=True,
         augment=False,
     )
 
-    source_dataset = LibriBrainCompetitionHoldout(
-        data_path='../data',
+    # source_dataset = LibriBrainCompetitionHoldout(
+    #     data_path='../data',
+    #     standardize=True,
+    #     tmin=0.0,
+    #     tmax=0.5,
+    #     task='phoneme'
+    # )
+
+    source_dataset = LibriBrainPhoneme(
+        data_path="../data",
         standardize=True,
         tmin=0.0,
         tmax=0.5,
-        task='phoneme'
+        partition="test",  
     )
 
     mapper = train_mapper_dataloader(
