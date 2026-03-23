@@ -21,3 +21,4 @@ lightning_logs/
 /models
 
 *.csv
+saliency_maps/**/*.json

@@ -61,3 +61,33 @@ To submit your predictions, use the following command:
 ```bash
 sh submit.sh <pred-csv-file>
 ```
+
+## Layer Saliency Clustermap
+
+Use `generate_layer_saliency_clustermap.py` to estimate which model sublayers are most sensitive to each phoneme class for a saved checkpoint.
+
+Example:
+
+```bash
+uv run python generate_layer_saliency_clustermap.py \
+  --config configs/phoneme/stft/base-config.yaml \
+  --checkpoint out/phoneme-stft/best-val_bal_acc-stft-hpo-9-epoch=09-val_f1_macro=0.4111.ckpt \
+  --output-dir saliency_maps/stft-0.4111-layer-clustermap \
+  --batch-size 32 \
+  --num-workers 4
+```
+
+The script writes one set of files for each split (`validation` and `test`):
+
+- `*_layer_saliency_raw.csv`: mean absolute gradient score for each `layer.sublayer` and phoneme
+- `*_layer_saliency_rowminmax.csv`: row-wise normalized version of the raw table
+- `*_layer_saliency_clustermap.png`: clustered heatmap rendered from the normalized table
+- `*_layer_saliency_summary.json`: metadata such as checkpoint path, row names, phoneme order, and label counts
+
+How to read the figure:
+
+- Each row is a model component discovered from the module tree, named in `<layer>.<sublayer>` form when possible, for example `res0.conv2d0` or `classifier.linear1`.
+- Each column is a phoneme class.
+- Each cell shows the relative saliency of that sublayer for that phoneme. Higher values mean the target logit is more sensitive to activations at that sublayer.
+- The PNG uses the row-wise normalized scores, so colors are best used to compare phonemes within the same row, not absolute magnitudes across different rows.
+- The dendrograms reorder rows and columns by similarity. Nearby rows have similar phoneme-saliency patterns, and nearby columns are phonemes that trigger similar sublayer sensitivity profiles.
