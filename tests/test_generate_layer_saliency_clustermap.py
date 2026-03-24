@@ -1,12 +1,23 @@
 from pathlib import Path
 
+import click
+import pandas as pd
 import torch
+from torch.utils.data import ConcatDataset
 from torch import nn
 
+import plot_phoneme_class_distribution as class_dist
 from generate_layer_saliency_clustermap import (
+    format_plot_row_label,
     get_model_class,
     get_requested_activations,
     infer_row_specs,
+    get_cluster_map_figsize,
+)
+from plot_phoneme_class_distribution import (
+    allocate_worker_budget,
+    build_distribution_table,
+    count_labels_in_dataset,
 )
 from libribrain_experiments.models.configurable_modules.classification_module import (
     ClassificationModule,
@@ -94,3 +105,148 @@ def test_get_requested_activations_skips_missing_rows():
 
     assert observed_names == ["attn", "proj"]
     assert observed_activations == [activations["attn"], activations["proj"]]
+
+
+def test_format_plot_row_label_strips_conformer_prefixes_for_plotting():
+    row_name = (
+        "conformer_speech0.encoder.conformer_layers."
+        "conformer_layer3.conv_module.conv1d2"
+    )
+
+    assert format_plot_row_label(row_name) == "conformer_layer3.conv_module.conv1d2"
+
+
+def test_get_cluster_map_figsize_is_tall_enough_for_megconformer():
+    assert get_cluster_map_figsize() == (28, 30)
+
+
+class ToyLabelDataset(torch.utils.data.Dataset):
+    labels_sorted = ["aa", "bb", "cc"]
+
+    def __init__(self, labels):
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        return torch.randn(2, 3), torch.tensor(self.labels[index], dtype=torch.long)
+
+
+def test_count_labels_in_dataset_counts_each_class():
+    dataset = ToyLabelDataset([0, 2, 1, 2, 2, 0])
+
+    counts = count_labels_in_dataset(dataset, num_classes=3, batch_size=2, num_workers=0)
+
+    assert counts.tolist() == [2, 1, 3]
+
+
+def test_count_labels_in_dataset_reports_progress_bar():
+    dataset = ToyLabelDataset([0, 2, 1, 2, 2, 0])
+    seen = {}
+
+    def fake_tqdm(iterable, **kwargs):
+        seen["kwargs"] = kwargs
+        return iterable
+
+    original_tqdm = class_dist.tqdm
+    class_dist.tqdm = fake_tqdm
+    try:
+        count_labels_in_dataset(
+            dataset,
+            num_classes=3,
+            batch_size=2,
+            num_workers=0,
+            split_name="train",
+        )
+    finally:
+        class_dist.tqdm = original_tqdm
+
+    assert seen["kwargs"]["desc"] == "Counting train labels"
+    assert seen["kwargs"]["leave"] is False
+
+
+def test_build_distribution_table_contains_counts_and_percentages():
+    labels = ["aa", "bb", "cc"]
+    train_counts = torch.tensor([2, 1, 3])
+    val_counts = torch.tensor([1, 1, 2])
+
+    table = build_distribution_table(labels, train_counts, val_counts)
+
+    expected = pd.DataFrame(
+        {
+            "phoneme": ["cc", "aa", "bb"],
+            "train_count": [3, 2, 1],
+            "train_pct": [3 / 6, 2 / 6, 1 / 6],
+            "val_count": [2, 1, 1],
+            "val_pct": [2 / 4, 1 / 4, 1 / 4],
+        }
+    )
+
+    pd.testing.assert_frame_equal(table, expected)
+
+
+def test_build_distribution_table_sorts_by_descending_train_frequency():
+    labels = ["aa", "bb", "cc"]
+    train_counts = torch.tensor([2, 5, 3])
+    val_counts = torch.tensor([9, 1, 4])
+
+    table = build_distribution_table(labels, train_counts, val_counts)
+
+    assert table["phoneme"].tolist() == ["bb", "cc", "aa"]
+    assert table["train_count"].tolist() == [5, 3, 2]
+    assert table["val_count"].tolist() == [1, 4, 9]
+
+
+def test_plot_phoneme_class_distribution_uses_click_command():
+    assert isinstance(class_dist.main, click.core.Command)
+
+
+def test_allocate_worker_budget_splits_total_budget():
+    assert allocate_worker_budget(0) == (0, 0)
+    assert allocate_worker_budget(1) == (1, 0)
+    assert allocate_worker_budget(2) == (1, 1)
+    assert allocate_worker_budget(5) == (3, 2)
+
+
+def test_load_raw_train_and_val_datasets_uses_unwrapped_partitions():
+    original_get_partition = class_dist.get_dataset_partition_from_config
+
+    class ToyPartitionDataset(torch.utils.data.Dataset):
+        def __init__(self, labels_sorted, channel_means=None, channel_stds=None):
+            self.labels_sorted = labels_sorted
+            self.channel_means = torch.tensor([1.0]) if channel_means is None else channel_means
+            self.channel_stds = torch.tensor([2.0]) if channel_stds is None else channel_stds
+
+        def __len__(self):
+            return 1
+
+        def __getitem__(self, index):
+            return torch.zeros(1), torch.tensor(0)
+
+    seen = []
+
+    def fake_get_partition(partition_config, channel_means=None, channel_stds=None):
+        seen.append((partition_config, channel_means, channel_stds))
+        return ConcatDataset([ToyPartitionDataset(["aa", "bb"], channel_means, channel_stds)])
+
+    class_dist.get_dataset_partition_from_config = fake_get_partition
+    try:
+        train_dataset, val_dataset, labels = class_dist.load_raw_train_and_val_datasets(
+            {
+                "datasets": {
+                    "train": [{"libribrain_phoneme": {"partition": "train"}}],
+                    "val": [{"libribrain_phoneme": {"partition": "validation"}}],
+                }
+            }
+        )
+    finally:
+        class_dist.get_dataset_partition_from_config = original_get_partition
+
+    assert isinstance(train_dataset, ConcatDataset)
+    assert isinstance(val_dataset, ConcatDataset)
+    assert labels == ["aa", "bb"]
+    assert seen[0][1] is None
+    assert seen[0][2] is None
+    assert torch.equal(seen[1][1], torch.tensor([1.0]))
+    assert torch.equal(seen[1][2], torch.tensor([2.0]))
