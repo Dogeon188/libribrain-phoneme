@@ -1,6 +1,6 @@
 # LibriBrain 2025
 
-The code is mmodified from [neural-processing-lab/libribrain-experiments](https://github.com/neural-processing-lab/libribrain-experiments). For details of the competition, see the [LibriBrain 2025 website](https://neural-processing-lab.github.io/2025-libribrain-competition/).
+The code is modified from [neural-processing-lab/libribrain-experiments](https://github.com/neural-processing-lab/libribrain-experiments). For details of the competition, see the [LibriBrain 2025 website](https://neural-processing-lab.github.io/2025-libribrain-competition/).
 
 
 ## Installation
@@ -27,32 +27,62 @@ Before running the project, make sure to update the configuration files with the
 - **`output_path`**: Set this to the directory where output results (e.g., logs, predictions) will be saved.
 - **`checkpoint_path`**: Define the location where model checkpoints should be stored.
 
-## Training a Model
+## Running Experiments
 
-Use the following command format to execute an experiment:
+The project entrypoint is [`main.py`](./main.py):
 
 ```bash
-TASK=<task>  # "speech" or "phoneme"
-CONFIG_NAME=<config-name> # the name of the configuration at configs/<task>/<config-name>/
-RUN_NAME=<run-name> # custom name for the run, will be shown in W&B dashboard, by default = <config-name>
-RUN_ID=<run-id> # run index, used to distinguish different runs with the same name, by default = 0
-
-sh run.sh
+uv run main.py <mode> <config-name> <run-id>
 ```
+
+Available modes:
+
+- `train`: run HPO/training for `configs/phoneme/<config-name>/`
+- `predict`: load the best checkpoint for that run and generate holdout predictions
+- `val`: load the best checkpoint for that run and evaluate on validation data
+- `viz`: visualize the validation results JSON for that run
+
+`<config-name>` is the directory name under `configs/phoneme/`, for example `baseline-norm`.
+`<run-id>` is the run index used to distinguish repeated runs of the same config.
+
+## Training a Model
+
+Example:
+
+```bash
+uv run main.py train baseline-norm 0
+```
+
+This uses:
+
+- `configs/phoneme/baseline-norm/base-config.yaml`
+- `configs/phoneme/baseline-norm/search-space.yaml`
 
 ## Generating Predictions
 
-To generate predictions for the holdout dataset, use the following command:
+To generate holdout predictions from the best checkpoint for a run:
 
 ```bash
-TASK=<task>  # "speech" or "phoneme"
-CONFIG_NAME=<config-name> # the name of the configuration at configs/<task>/<config-name>/
-RUN_ID=<run-id> # run index, used to distinguish different runs with the same name, by default = 0
-
-sh submission.sh
+uv run main.py predict baseline-norm 0
 ```
 
-This will automatically load the best checkpoint (according to validation F1 score) and generate predictions for the holdout dataset. The predictions will be saved in a CSV file named `preds_<ckpt-path>.csv`.
+This automatically finds the best checkpoint matching `baseline-norm-hpo-0` under `./out/` and uses `configs/phoneme/baseline-norm/submission.yaml` for prediction settings. The predictions are saved as a CSV by the prediction pipeline.
+
+## Validating a Trained Model
+
+To run validation for the best checkpoint of a run:
+
+```bash
+uv run main.py val baseline-norm 0
+```
+
+## Visualizing Validation Results
+
+To visualize the saved validation results for a run:
+
+```bash
+uv run main.py viz baseline-norm 0
+```
 
 ## Submitting Predictions
 
@@ -61,6 +91,8 @@ To submit your predictions, use the following command:
 ```bash
 sh submit.sh <pred-csv-file>
 ```
+
+`submit.sh` is only for uploading an already generated predictions CSV to EvalAI. Training, validation, prediction generation, and visualization all go through `main.py`.
 
 ## Layer Saliency Clustermap
 
