@@ -1,6 +1,6 @@
 import torch
 from torch.nn import Conv1d, ELU
-from torch.nn import Softsign, GRU, Linear, ReLU, Sigmoid, GELU, BatchNorm1d
+from torch.nn import Softsign, GRU, Linear, ReLU, Sigmoid, GELU, BatchNorm1d, InstanceNorm1d
 from torch import nn
 from torch.optim import Adam, AdamW, SGD
 from torch.optim.lr_scheduler import LinearLR, StepLR, CosineAnnealingLR, CosineAnnealingWarmRestarts
@@ -96,6 +96,8 @@ def modules_from_config(modules: list[tuple[str, dict]]):
                 module = nn.Dropout1d(**config)
             case "batch_norm1d":
                 module = BatchNorm1d(**config)
+            case "instance_norm1d":
+                module = InstanceNorm1d(**config)
             case "batch_norm2d":
                 module = nn.BatchNorm2d(**config)
             case "layer_norm":
