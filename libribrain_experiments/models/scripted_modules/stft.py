@@ -13,7 +13,8 @@ torch.backends.cuda.enable_math_sdp(True)
 class STFTClassificationModule(BaseClassificationModule):
     def __init__(self,
                  upscale_factor: int = 4, lr: float = 0.0001,
-                 sr=250, n_fft=25, hop_length=5):
+                 sr=250, n_fft=25, hop_length=5,
+                 use_instance_norm: bool = False):
         super().__init__()
 
         self.lr = lr
@@ -25,6 +26,9 @@ class STFTClassificationModule(BaseClassificationModule):
         self.freq_bins = n_fft // 2 + 1
         self.time_bins = 1 + (SEQUENCE_LENGTH - n_fft) // hop_length
         self.window = torch.hann_window(n_fft)
+        self.input_instance_norm = (
+            nn.InstanceNorm2d(N_CHANNELS) if use_instance_norm else nn.Identity()
+        )
 
         # Model Architecture
 
@@ -140,6 +144,7 @@ class STFTClassificationModule(BaseClassificationModule):
         Zxx = Zxx.view(-1, N_CHANNELS, self.freq_bins, self.time_bins)
         # Zxx.shape = (, 306, freq_bins=14, time_bins=14)
         x = torch.abs(Zxx)
+        x = self.input_instance_norm(x)
         x = self.res0(x) + self.downsample0(x)
         x = self.res1(x) + x
         x = self.res2(x) + x

@@ -23,6 +23,7 @@ from libribrain_experiments.models.configurable_modules.classification_module im
     ClassificationModule,
 )
 from libribrain_experiments.models.scripted_modules.stft import STFTClassificationModule
+from libribrain_experiments.models.scripted_modules.base_module import N_CHANNELS, N_CLASSES
 
 
 def test_get_model_class_uses_configurable_module_for_list_configs():
@@ -68,6 +69,17 @@ def test_infer_row_specs_supports_stft_module():
         "classifier.linear0",
         "classifier.linear1",
     ]
+
+
+def test_stft_module_optionally_applies_input_instance_norm():
+    module = STFTClassificationModule(use_instance_norm=True)
+    inputs = torch.randn(2, N_CHANNELS, 125)
+
+    outputs = module(inputs)
+
+    assert isinstance(module.input_instance_norm, nn.InstanceNorm2d)
+    assert module.input_instance_norm.num_features == N_CHANNELS
+    assert outputs.shape == (2, N_CLASSES)
 
 
 class ToyAttentionBlock(nn.Module):
