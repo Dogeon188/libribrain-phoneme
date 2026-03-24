@@ -198,6 +198,17 @@ def get_requested_activations(
     return observed_row_names, [activations[name] for name in observed_row_names]
 
 
+def format_plot_row_label(row_name: str) -> str:
+    label = row_name.removeprefix("conformer_speech0.")
+    label = label.replace("encoder.conformer_layers.", "")
+    return label
+
+
+def get_cluster_map_figsize() -> tuple[int, int]:
+    return (28, 12)
+    # can change to e.g. (28, 30) for larger models with more layers
+
+
 def render_cluster_map(df: pd.DataFrame, title: str, output_path: Path) -> None:
     values = df.to_numpy(dtype=float)
     if values.shape[0] > 1:
@@ -215,10 +226,10 @@ def render_cluster_map(df: pd.DataFrame, title: str, output_path: Path) -> None:
         col_order = np.arange(values.shape[1])
 
     ordered = values[np.ix_(row_order, col_order)]
-    row_labels = [df.index[i] for i in row_order]
+    row_labels = [format_plot_row_label(df.index[i]) for i in row_order]
     col_labels = [df.columns[i] for i in col_order]
 
-    fig = plt.figure(figsize=(28, 12))
+    fig = plt.figure(figsize=get_cluster_map_figsize())
     gs = gridspec.GridSpec(
         2,
         3,
